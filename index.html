@@ -8,6 +8,15 @@
 </head>
 <body>
 
+<!-- Title Screen -->
+<div id="title-screen">
+<h1>Blackjack Trainer</h1>
+<button id="play-btn">Play</button>
+</div>
+
+<!-- Main Game Container -->
+<div id="game-container" class="hidden">
+<!-- Stats Panel -->
 <div id="stats">
 <h3>Stats</h3>
 <p>Rounds: <span id="rounds">0</span></p>
@@ -15,18 +24,23 @@
 <p>Busts: <span id="busts">0</span></p>
 <p>Win Rate: <span id="win-rate">0%</span></p>
 <p>Bust Rate: <span id="bust-rate">0%</span></p>
+<hr/>
+<p>Your Hand Count: <span id="player-count">0</span></p>
+<p>Dealer Hand Count: <span id="dealer-count">0</span></p>
 <button id="reset-stats">Reset Stats</button>
 <hr/>
-<button id="toggle-count">Toggle Count</button>
+<button id="toggle-count">Toggle Shoe Count</button>
 <p id="count-display" style="display:none">
 Running Count: <span id="running-count">0</span>
 </p>
 </div>
 
+<!-- Shoe Display -->
 <div id="shoe">
 Shoe: <span id="shoe-count">0</span> cards
 </div>
 
+<!-- Table Area -->
 <div id="game-area">
 <div id="dealer-area">
 <h2>Dealer</h2>
@@ -38,6 +52,7 @@ Shoe: <span id="shoe-count">0</span> cards
 </div>
 </div>
 
+<!-- Controls -->
 <div id="controls">
 <button id="hit-btn">Hit</button>
 <button id="stand-btn">Stand</button>
@@ -45,7 +60,9 @@ Shoe: <span id="shoe-count">0</span> cards
 <button id="split-btn">Split</button>
 </div>
 
+<!-- Message -->
 <div id="message"></div>
+</div>
 
 <script src="js/script.js"></script>
 </body>
