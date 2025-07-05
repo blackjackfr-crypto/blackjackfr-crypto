@@ -1,91 +1,117 @@
+/* Reset & Globals */
+* { box-sizing: border-box; margin: 0; padding: 0; }
 body {
-margin: 0;
-padding: 0;
-background-color: #000;
-color: #d4af37;
 font-family: Arial, sans-serif;
+background: #333;
+color: #fff;
+overflow: hidden;
 }
 
-/* Stats box */
-#stats {
+/* Title Screen */
+#title-screen {
 position: absolute;
-top: 10px;
-left: 10px;
+inset: 0;
+background: #fff;
+color: #000;
+display: flex;
+flex-direction: column;
+align-items: center;
+justify-content: center;
+}
+#title-screen h1 { font-size: 3em; margin-bottom: 20px; }
+#title-screen button {
+padding: 15px 30px;
+font-size: 1.2em;
+background: #d4af37;
+color: #fff;
+border: none;
+border-radius: 8px;
+cursor: pointer;
+transition: background .3s;
+}
+#title-screen button:hover { background: #bfa134; }
+
+/* Hidden helper */
+.hidden { display: none; }
+
+/* Stats panel */
+#stats {
+position: absolute; top: 10px; left: 10px;
+width: 180px;
 background: rgba(0,0,0,0.7);
-border: 1px solid #d4af37;
-border-radius: 5px;
+border: 2px solid #d4af37;
+border-radius: 8px;
 padding: 10px;
-width: 160px;
+font-size: 0.9em;
+line-height: 1.4;
 }
-
-#stats h3 {
-margin-top: 0;
-}
-
+#stats h3 { text-align: center; margin-bottom: 8px; }
+#stats hr { border: 0; border-top: 1px solid #555; margin: 8px 0; }
 #stats button {
 width: 100%;
 margin: 5px 0;
-padding: 5px;
+padding: 6px;
 background: #222;
 color: #d4af37;
 border: 1px solid #d4af37;
-border-radius: 3px;
+border-radius: 4px;
 cursor: pointer;
 }
-
-#stats hr {
-border: 0;
-border-top: 1px solid #444;
-margin: 8px 0;
-}
+#stats button:hover { background: #2a2a2a; }
 
 /* Shoe display */
 #shoe {
-position: absolute;
-top: 10px;
-right: 10px;
+position: absolute; top: 10px; right: 10px;
 background: rgba(0,0,0,0.7);
-border: 1px solid #d4af37;
-border-radius: 5px;
+border: 2px solid #d4af37;
+border-radius: 8px;
 padding: 10px;
 }
 
-/* Game layout */
+/* Table background */
 #game-area {
+position: absolute;
+top: 100px; bottom: 100px; left: 0; right: 0;
+background: radial-gradient(circle at center,
+#a57c00 0%, #6a4c00 80%);
 display: flex;
 justify-content: space-around;
-margin-top: 100px;
+align-items: center;
 }
 
+/* Hand containers */
 .cards {
 display: flex;
+padding: 10px;
 }
 
 /* Controls */
 #controls {
-text-align: center;
-margin-top: 30px;
+position: absolute;
+bottom: 30px; left: 50%;
+transform: translateX(-50%);
 }
-
 #controls button {
 margin: 0 10px;
 padding: 10px 20px;
 background: #222;
 color: #d4af37;
-border: 1px solid #d4af37;
-border-radius: 5px;
+border: 2px solid #d4af37;
+border-radius: 6px;
 cursor: pointer;
+font-size: 1em;
+transition: background .2s;
 }
+#controls button:disabled { opacity: 0.4; cursor: default; }
+#controls button:hover:not(:disabled) { background: #2a2a2a; }
 
-#controls button:disabled {
-opacity: 0.4;
-cursor: default;
-}
-
+/* Message */
 #message {
+position: absolute;
+bottom: 80px;
+width: 100%;
 text-align: center;
-margin-top: 20px;
-font-size: 1.2em;
+font-size: 1.3em;
 }
 
 /* Card styling */
@@ -93,53 +119,45 @@ font-size: 1.2em;
 position: relative;
 width: 60px;
 height: 90px;
-background: #fff;
-border: 1px solid #d4af37;
+background: #000;
+border: 2px solid #fff;
 border-radius: 6px;
-margin: 5px;
-box-shadow: 2px 2px 5px rgba(0,0,0,0.5);
-color: #000;
+margin: 0 5px;
+color: #fff;
 font-family: serif;
+user-select: none;
+animation: deal 0.4s ease-out;
 }
 
-.card.hearts, .card.diamonds {
-color: red;
+/* Suits color */
+.card.hearts .corner,
+.card.hearts .suit,
+.card.diamonds .corner,
+.card.diamonds .suit {
+color: #e00;
 }
 
-.card .corner {
+/* Corners */
+.corner {
 position: absolute;
 font-size: 0.8em;
 }
-
-.card .corner.top {
-top: 4px;
-left: 4px;
-}
-
-.card .corner.bottom {
-bottom: 4px;
-right: 4px;
+.corner.top { top: 4px; left: 4px; }
+.corner.bottom {
+bottom: 4px; right: 4px;
 transform: rotate(180deg);
 }
-
-.card .suit {
+/* Center suit */
+.suit {
 position: absolute;
-top: 28px;
+top: 30px;
 width: 100%;
 text-align: center;
-font-size: 1.6em;
+font-size: 1.4em;
 }
 
-/* Back of card */
-.card.back {
-background: #333;
-color: #d4af37;
-}
-.card.back::after {
-content: '❓';
-position: absolute;
-font-size: 2em;
-top: 50%;
-left: 50%;
-transform: translate(-50%, -50%);
+/* Deal animation */
+@keyframes deal {
+from { transform: translateY(-50px) scale(0.5); opacity: 0; }
+to { transform: translateY(0) scale(1); opacity: 1; }
 }
