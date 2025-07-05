@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-// --- Setup ---
+// ----- Setup -----
 const suits = ['♠','♥','♦','♣'];
 const ranks = [
 { name:'A', value:1 },
@@ -19,11 +19,13 @@ const ranks = [
 
 let shoe = [], runningCount = 0;
 const stats = { rounds:0, wins:0, busts:0 };
-
-let dealerHand = [], playerHands = [], currentHand = 0;
+let dealerHand = [], playerHands = [[]], currentHand = 0;
 let canDouble, canSplit;
 
-// --- DOM refs ---
+// ----- DOM refs -----
+const titleScreen = document.getElementById('title-screen');
+const playBtn = document.getElementById('play-btn');
+const gameCont = document.getElementById('game-container');
 const dealerDiv = document.getElementById('dealer-cards');
 const playerDiv = document.getElementById('player-cards');
 const hitBtn = document.getElementById('hit-btn');
@@ -41,11 +43,13 @@ const toggleBtn = document.getElementById('toggle-count');
 const countEl = document.getElementById('count-display');
 const runCount = document.getElementById('running-count');
 const shoeCountEl = document.getElementById('shoe-count');
+const pCountEl = document.getElementById('player-count');
+const dCountEl = document.getElementById('dealer-count');
 
-// --- Build & shuffle shoe of 5 decks ---
+// ----- Shoe & Count -----
 function buildShoe() {
 shoe = [];
-for (let d=0; d<5; d++) {
+for (let d = 0; d < 5; d++) {
 for (const s of suits) {
 for (const r of ranks) {
 shoe.push({ suit: s, rank: r.name, value: r.value });
@@ -53,7 +57,9 @@ shoe.push({ suit: s, rank: r.name, value: r.value });
 }
 }
 shuffle(shoe);
+runningCount = 0;
 updateShoeDisplay();
+runCount.textContent = 0;
 }
 
 function shuffle(a) {
@@ -63,21 +69,17 @@ const j = Math.floor(Math.random() * (i + 1));
 }
 }
 
-// --- Shoe display ---
 function updateShoeDisplay() {
 shoeCountEl.textContent = shoe.length;
 }
 
-// --- Draw & count ---
 function drawCard() {
-if (shoe.length === 0) {
-buildShoe();
-runningCount = 0;
-}
+if (shoe.length === 0) buildShoe();
+
 const c = shoe.pop();
 updateShoeDisplay();
 
-// Hi-Lo counting
+// Hi-Lo
 if (c.value >= 2 && c.value <= 6) runningCount++;
 else if (c.value === 10 || c.rank === 'A') runningCount--;
 runCount.textContent = runningCount;
@@ -85,7 +87,7 @@ runCount.textContent = runningCount;
 return c;
 }
 
-// --- Hand utilities ---
+// ----- Hand Utils -----
 function handValue(hand) {
 let sum = 0, aces = 0;
 for (const c of hand) {
@@ -103,80 +105,38 @@ function isBlackjack(hand) {
 return hand.length === 2 && handValue(hand) === 21;
 }
 
-// --- Render a hand into a container ---
+// ----- Rendering -----
 function renderHand(container, hand, hideFirst = false) {
 container.innerHTML = '';
 hand.forEach((c, i) => {
 const cd = document.createElement('div');
 cd.classList.add('card');
-// back‐side?
 if (i === 0 && hideFirst) {
-cd.classList.add('back');
+// face down
 } else {
-// suit class for coloring
+// color by suit
 if (c.suit === '♥' || c.suit === '♦') {
 cd.classList.add('hearts');
 } else {
 cd.classList.add('spades');
 }
-// corners
-const top = document.createElement('span');
-top.className = 'corner top';
-top.textContent = c.rank + c.suit;
-const bottom = document.createElement('span');
-bottom.className = 'corner bottom';
-bottom.textContent = c.rank + c.suit;
-const suitMid = document.createElement('span');
-suitMid.className = 'suit';
-suitMid.textContent = c.suit;
-cd.append(top, bottom, suitMid);
+// corners & suit
+const top = Object.assign(document.createElement('span'),
+{ className:'corner top', textContent: c.rank + c.suit });
+const bottom = Object.assign(document.createElement('span'),
+{ className:'corner bottom', textContent: c.rank + c.suit });
+const suit = Object.assign(document.createElement('span'),
+{ className:'suit', textContent: c.suit });
+cd.append(top, bottom, suit);
 }
 container.appendChild(cd);
 });
-}
-
-// --- Stats UI ---
-function updateStats() {
-const r = stats.rounds, w = stats.wins, b = stats.busts;
-roundsEl.textContent = r;
-winsEl.textContent = w;
-bustsEl.textContent = b;
-winRateEl.textContent = r ? ((w / r) * 100).toFixed(1) + '%' : '0%';
-bustRateEl.textContent = r ? ((b / r) * 100).toFixed(1) + '%' : '0%';
-}
-
-function resetStats() {
-stats.rounds = stats.wins = stats.busts = 0;
-updateStats();
-}
-
-// --- Deal a new round ---
-function startRound() {
-msgDiv.textContent = '';
-if (shoe.length === 0) buildShoe();
-
-dealerHand = [];
-playerHands = [[]];
-currentHand = 0;
-canDouble = true;
-canSplit = true;
-
-// initial two‐card deal
-dealerHand.push(drawCard());
-playerHands[0].push(drawCard());
-dealerHand.push(drawCard());
-playerHands[0].push(drawCard());
-
-render();
-checkAutoEnd();
-updateControls();
 }
 
 function render() {
 const hideDealer = !playerHandsFinished() && playerHands[currentHand].length <= 2;
 renderHand(dealerDiv, dealerHand, hideDealer);
 
-// multiple split hands?
 if (playerHands.length === 1) {
 playerDiv.innerHTML = '';
 renderHand(playerDiv, playerHands[0]);
@@ -190,50 +150,86 @@ renderHand(sub, h, false);
 playerDiv.appendChild(sub);
 });
 }
+
+// update live hand counts
+pCountEl.textContent = handValue(playerHands[currentHand]);
+dCountEl.textContent = hideDealer
+? '?' : handValue(dealerHand);
 }
 
-function updateControls() {
-const hand = playerHands[currentHand];
-const val = handValue(hand);
-hitBtn.disabled = val >= 21;
-standBtn.disabled = false;
-dblBtn.disabled = !canDouble;
-splitBtn.disabled = !(canSplit && hand.length === 2 && hand[0].value === hand[1].value);
+// ----- Stats -----
+function updateStats() {
+const r = stats.rounds, w = stats.wins, b = stats.busts;
+roundsEl.textContent = r;
+winsEl.textContent = w;
+bustsEl.textContent = b;
+winRateEl.textContent = r ? ((w/r)*100).toFixed(1) + '%' : '0%';
+bustRateEl.textContent = r ? ((b/r)*100).toFixed(1) + '%' : '0%';
+}
+
+function resetStats() {
+stats.rounds = stats.wins = stats.busts = 0;
+updateStats();
+}
+
+// ----- Round Logic -----
+function startRound() {
+msgDiv.textContent = '';
+if (!shoe.length) buildShoe();
+
+dealerHand = [];
+playerHands = [[]];
+currentHand = 0;
+canDouble = true;
+canSplit = true;
+
+// deal two cards each
+dealerHand.push(drawCard());
+playerHands[0].push(drawCard());
+dealerHand.push(drawCard());
+playerHands[0].push(drawCard());
+
+render();
+checkAutoEnd();
+updateControls();
 }
 
 function checkAutoEnd() {
 const hand = playerHands[currentHand];
 const val = handValue(hand);
 if (isBlackjack(hand) || val > 21) {
-setTimeout(stand, 300);
+setTimeout(stand, 400);
 }
 }
 
-// --- Player actions ---
+// ----- Controls -----
+function updateControls() {
+const hand = playerHands[currentHand];
+const val = handValue(hand);
+hitBtn.disabled = val >= 21;
+standBtn.disabled = false;
+dblBtn.disabled = !canDouble;
+splitBtn.disabled=!(canSplit && hand.length===2 && hand[0].value===hand[1].value);
+}
+
 function hit() {
 playerHands[currentHand].push(drawCard());
-canDouble = false;
-canSplit = false;
+canDouble = false; canSplit = false;
 render();
-const val = handValue(playerHands[currentHand]);
-if (val > 21) {
+const v = handValue(playerHands[currentHand]);
+if (v > 21) {
 stats.busts++;
 stand();
-} else {
-updateControls();
-}
+} else updateControls();
 }
 
 function stand() {
 currentHand++;
-canDouble = false;
-canSplit = false;
+canDouble = canSplit = false;
 if (currentHand < playerHands.length) {
 render();
 updateControls();
-} else {
-dealerTurn();
-}
+} else dealerTurn();
 }
 
 function doubleDown() {
@@ -248,13 +244,13 @@ function split() {
 if (!canSplit) return;
 const h = playerHands[0];
 playerHands = [[h[0]], [h[1]]];
-playerHands.forEach(hand => hand.push(drawCard()));
+playerHands.forEach(h2 => h2.push(drawCard()));
 canSplit = false;
 render();
 updateControls();
 }
 
-// --- Dealer & resolution ---
+// ----- Dealer & Resolve -----
 function dealerTurn() {
 render();
 while (handValue(dealerHand) < 17) {
@@ -263,28 +259,19 @@ render();
 }
 
 const dVal = handValue(dealerHand);
-playerHands.forEach(h => {
+playerHands.forEach((h, i) => {
 const pVal = handValue(h);
-let won = false;
-if (pVal > 21) won = false;
-else if (dVal > 21) won = true;
-else if (pVal > dVal) won = true;
-if (won) stats.wins++;
+let res = '';
+if (pVal > 21) res = `Hand ${i+1}: Bust`;
+else if (dVal > 21) { res = `Hand ${i+1}: Win`; stats.wins++; }
+else if (pVal > dVal) { res = `Hand ${i+1}: Win`; stats.wins++; }
+else if (pVal === dVal) res = `Hand ${i+1}: Push`;
+else res = `Hand ${i+1}: Lose`;
+msgDiv.innerHTML += res + (i < playerHands.length-1 ? ' | ' : '');
 });
+
 stats.rounds++;
 updateStats();
-
-msgDiv.innerHTML = playerHands
-.map((h,i) => {
-const pVal = handValue(h);
-if (pVal > 21) return `Hand ${i+1}: bust`;
-if (dVal > 21) return `Hand ${i+1}: win`;
-if (pVal > dVal) return `Hand ${i+1}: win`;
-if (pVal === dVal) return `Hand ${i+1}: push`;
-return `Hand ${i+1}: lose`;
-})
-.join(' &nbsp;|&nbsp; ');
-
 setTimeout(startRound, 1500);
 }
 
@@ -292,17 +279,19 @@ function playerHandsFinished() {
 return currentHand >= playerHands.length;
 }
 
-// --- Event wiring ---
-hitBtn.addEventListener('click', hit);
-standBtn.addEventListener('click', stand);
-dblBtn.addEventListener('click', doubleDown);
-splitBtn.addEventListener('click', split);
+// ----- Event Listeners -----
+playBtn.addEventListener('click', () => {
+titleScreen.classList.add('hidden');
+gameCont.classList.remove('hidden');
+buildShoe();
+startRound();
+});
+hitBtn .addEventListener('click', hit);
+standBtn .addEventListener('click', stand);
+dblBtn .addEventListener('click', doubleDown);
+splitBtn .addEventListener('click', split);
+resetBtn .addEventListener('click', resetStats);
 toggleBtn.addEventListener('click', () => {
 countEl.style.display = countEl.style.display === 'none' ? 'block' : 'none';
 });
-resetBtn.addEventListener('click', resetStats);
-
-// --- Init ---
-buildShoe();
-startRound();
 });
